@@ -12,6 +12,20 @@ Handling these lists of kwown sources is costly and error prone. This controller
 Whenever an Ingress object is created containing the annotation `armesto.net/ingress: "office"`,
 this controller will add the `ingress.kubernetes.io/whitelist-source-range` annotation to the Ingress object with some addresses.
 
+```yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: test-ingress
+  namespace: default
+  annotations:
+    armesto.net/ingress: vpn
+spec:
+  backend:
+    serviceName: testsvc
+    servicePort: 80
+```
+
 Which ones? The whitelisted addresses come from a ConfigMap that contains a map for different sources. The addresses in the key specified in the `armesto.net/ingress` annotation will be whitelisted.
 If we'd have the following `ConfigMap`, and our Ingress object annotated with `armesto.net/ingress: "office"`, the addresses 8.8.8.8/32 and 8.8.4.4/32 would be whitelisted.
 
