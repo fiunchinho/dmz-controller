@@ -1,6 +1,9 @@
 language: go
 go:
   - 1.8
+sudo: required
+services:
+  - docker
 install: bin/install
 script: bin/build && bin/coverage
 deploy:
