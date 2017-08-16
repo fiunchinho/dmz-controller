@@ -1,0 +1,9 @@
+language: go
+go:
+  - 1.8
+install: bin/install
+script: bin/build && bin/coverage
+deploy:
+  provider: script
+  script: bin/publish
+  skip_cleanup: true

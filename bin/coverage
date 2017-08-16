@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+ 
+set -ev
+ 
+# Get packages list except vendor directory
+packages=$(glide novendor)
+ 
+# Create cover profile
+COVER_MODE="count"
+echo "mode: $COVER_MODE" > profile.cov
+for package in ${packages}; do
+   go test -cover -covermode=${COVER_MODE} -coverprofile=profile.cov.tmp ${package}
+   cat profile.cov.tmp | tail -n +2 >> profile.cov
+   rm profile.cov.tmp
+done
+ 
+# Print code coverage details
+go tool cover -func profile.cov
+ 
+# Generate coverage report
+gocov convert profile.cov | gocov-xml > coverage.xml
