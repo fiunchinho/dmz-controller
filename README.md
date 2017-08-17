@@ -1,4 +1,21 @@
-# DMZ Controller [![Build Status](https://travis-ci.org/fiunchinho/dmz-controller.svg?branch=master)](https://travis-ci.org/fiunchinho/dmz-controller)
+# DMZ Controller
+[![Build Status][1]][2] [![codecov.io][3]][4] [![Go Report][5]][6] [![GoDoc][7]][8] [![Docker Pulls][9]]][10] [![Code CLimate][11]]][12] [![Code CLimate Issues][13]]][14]
+
+[1]: https://travis-ci.org/fiunchinho/dmz-controller.svg?branch=master "Build Status badge"
+[2]: https://travis-ci.org/fiunchinho/dmz-controller "Travis-CI Build Status"
+[3]: https://codecov.io/github/v2ray/v2ray-core/coverage.svg?branch=master "Coverage badge"
+[4]: https://codecov.io/github/v2ray/v2ray-core?branch=master "Codecov Status"
+[5]: https://goreportcard.com/badge/github.com/fiunchinho/dmz-controller "Go Report badge"
+[6]: https://goreportcard.com/report/github.com/fiunchinho/dmz-controller "Go Report"
+[7]: https://godoc.org/v2ray.com/core?status.svg "GoDoc badge"
+[8]: https://godoc.org/v2ray.com/core "GoDoc"
+[9]: https://img.shields.io/docker/pulls/fiunchinho/dmz-controller.svg?maxAge=604800 "Docker Pulls"
+[10]: https://hub.docker.com/u/fiunchinho/dmz-controller "DockerHub"
+[11]: https://codeclimate.com/github/fiunchinho/dmz-controller/badges/gpa.svg "Code Climate badge"
+[12]: https://codeclimate.com/github/fiunchinho/dmz-controller "Code Climate"
+[13]: https://codeclimate.com/github/fiunchinho/dmz-controller/badges/issue_count.svg "Code Climate badge"
+[14]: https://codeclimate.com/github/fiunchinho/dmz-controller "Code Climate Issues"
+
 This is a kubernetes controller that watches Ingress objects that contain a specific annotation and adds whitelisted addresses to it.
 
 ## Motivation
