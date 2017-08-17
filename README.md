@@ -1,5 +1,5 @@
 # DMZ Controller
-[![Build Status][1]][2] [![codecov.io][3]][4] [![Go Report][5]][6] [![GoDoc][7]][8] [![Docker Pulls][9]]][10] [![Code CLimate][11]]][12] [![Code CLimate Issues][13]]][14]
+[![Build Status][1]][2] [![codecov.io][3]][4] [![Go Report][5]][6] [![GoDoc][7]][8] [![Docker Pulls][9]][10] [![Code CLimate][11]][12] [![Code CLimate Issues][13]][14]
 
 [1]: https://travis-ci.org/fiunchinho/dmz-controller.svg?branch=master "Build Status badge"
 [2]: https://travis-ci.org/fiunchinho/dmz-controller "Travis-CI Build Status"
