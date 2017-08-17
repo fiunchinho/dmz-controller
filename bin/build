@@ -4,8 +4,8 @@ set -ev
 
 glide install
 
-#gometalinter.v1 --install --update
-#gometalinter.v1 --checkstyle --vendor --disable-all -E vet -E goconst -E staticcheck -E structcheck -E unparam -E unused -E vetshadow -E varcheck --deadline=50s -j 11 "${PWD}/..." | tee /dev/tty > checkstyle-report.xml; test ${PIPESTATUS[0]} -eq 0 # waiting for qg|| true
+gometalinter.v1 --install --update
+gometalinter.v1 --checkstyle --vendor --disable-all -E vet -E goconst -E golint -E goimports --deadline=50s -j 11 "${PWD}/..." | tee /dev/tty > checkstyle-report.xml; test ${PIPESTATUS[0]} -eq 0 # waiting for qg|| true
 
 CGO_ENABLED=0 GOOS=linux go build -o app
 CGO_ENABLED=0 GOOS=linux go test -v $(glide novendor) | tee /dev/tty | go-junit-report > junit-report.xml;
