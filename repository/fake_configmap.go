@@ -4,7 +4,7 @@ import (
 	"k8s.io/client-go/pkg/api/v1"
 )
 
-// Ingress acceses k8s API to fetch/save Ingress objects
+// FakeConfigMap is an InMemory implementation of an ConfigMap repository
 type FakeConfigMap struct {
 	configMaps map[string]v1.ConfigMap
 }
@@ -15,11 +15,13 @@ func (h *FakeConfigMap) Get(namespace string, key string) (*v1.ConfigMap, error)
 	return &config, nil
 }
 
+// Save stores the given configmap to the repository
 func (h *FakeConfigMap) Save(configMap *v1.ConfigMap) error {
 	h.configMaps[configMap.Name] = *configMap
 	return nil
 }
 
+// NewFakeConfigMapRepository returns an instance of the repository
 func NewFakeConfigMapRepository() ConfigMapRepository {
 	return &FakeConfigMap{
 		configMaps: make(map[string]v1.ConfigMap),

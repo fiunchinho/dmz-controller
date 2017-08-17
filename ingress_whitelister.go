@@ -9,7 +9,10 @@ import (
 	"github.com/fiunchinho/dmz-controller/whitelist"
 )
 
+// IngressWhitelistAnnotation is the whitelist annotation used by the Kubernetes Ingress
 const IngressWhitelistAnnotation = "ingress.kubernetes.io/whitelist-source-range"
+
+// DMZProvidersAnnotation is the Ingress annotation that contains will trigger this controller
 const DMZProvidersAnnotation = "armesto.net/ingress"
 
 // IngressWhitelister to process watched Ingress objects
@@ -19,6 +22,7 @@ type IngressWhitelister struct {
 	configMapRepository repository.ConfigMapRepository
 }
 
+// Whitelist adds the desired addresses as whitelisted to the given Ingress object
 func (whitelister *IngressWhitelister) Whitelist(name string) error {
 	// retrieve the latest version in the cache of this object
 	ingress, err := whitelister.ingressRepository.Get(whitelister.namespace, name)

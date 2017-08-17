@@ -4,7 +4,7 @@ import (
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 )
 
-// Ingress acceses k8s API to fetch/save Ingress objects
+// FakeIngress is an InMemory implementation of an Ingress repository
 type FakeIngress struct {
 	objects []v1beta1.Ingress
 }
@@ -20,6 +20,7 @@ func (h *FakeIngress) Save(ingress *v1beta1.Ingress) (*v1beta1.Ingress, error) {
 	return ingress, nil
 }
 
+// NewFakeIngressRepository returns an instance of the repository
 func NewFakeIngressRepository() IngressRepository {
 	return &FakeIngress{}
 }

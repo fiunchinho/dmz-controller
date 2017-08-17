@@ -17,10 +17,12 @@ func (h *ConfigMap) Get(namespace string, key string) (*v1.ConfigMap, error) {
 	return h.informerFactory.Core().V1().ConfigMaps().Lister().ConfigMaps(namespace).Get(key)
 }
 
+// Save stores the ConfigMap in the repository
 func (h *ConfigMap) Save(configMap *v1.ConfigMap) error {
 	return nil
 }
 
+// NewConfigMapRepository returns a repository instance
 func NewConfigMapRepository(client kubernetes.Interface, informerFactory informers.SharedInformerFactory) ConfigMapRepository {
 	return &ConfigMap{
 		client:          client,

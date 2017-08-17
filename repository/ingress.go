@@ -22,6 +22,7 @@ func (h *Ingress) Save(ingress *v1beta1.Ingress) (*v1beta1.Ingress, error) {
 	return h.client.ExtensionsV1beta1().Ingresses(ingress.Namespace).Update(ingress)
 }
 
+// NewIngressRepository returns a repository instance
 func NewIngressRepository(client kubernetes.Interface, informerFactory informers.SharedInformerFactory) IngressRepository {
 	return &Ingress{
 		client:          client,

@@ -24,6 +24,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+// DMZConfigMapName is an internal annotation used to store addreses whitelisted by this controller
 const DMZConfigMapName = "dmz-controller"
 
 var (

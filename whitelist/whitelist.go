@@ -12,6 +12,7 @@ type Whitelist struct {
 	Ips []string
 }
 
+// NewWhitelistFromString constructs a Whitelist from a given string of addresses
 func NewWhitelistFromString(ipsAsString string) *Whitelist {
 	whitelist := new(Whitelist)
 	whitelist.Add(strings.Split(ipsAsString, ","))
@@ -19,6 +20,7 @@ func NewWhitelistFromString(ipsAsString string) *Whitelist {
 	return whitelist
 }
 
+// NewWhitelistFromArray constructs a Whitelist from a given array of addresses
 func NewWhitelistFromArray(ips []string) *Whitelist {
 	whitelist := new(Whitelist)
 	whitelist.Add(ips)
@@ -26,6 +28,7 @@ func NewWhitelistFromArray(ips []string) *Whitelist {
 	return whitelist
 }
 
+// NewEmptyWhitelist returns an empty Whitelist
 func NewEmptyWhitelist() *Whitelist {
 	return new(Whitelist)
 }
@@ -50,6 +53,7 @@ func (whitelist *Whitelist) Minus(substractedWhitelist *Whitelist) {
 	}
 }
 
+// ToString converts the Whitelist to a string
 func (whitelist *Whitelist) ToString() string {
 	return strings.Join(whitelist.Ips, ",")
 }
