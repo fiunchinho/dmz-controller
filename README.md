@@ -9,8 +9,8 @@
 [6]: https://codecov.io/github/fiunchinho/dmz-controller?branch=master "Codecov Status"
 [7]: https://goreportcard.com/badge/github.com/fiunchinho/dmz-controller "Go Report badge"
 [8]: https://goreportcard.com/report/github.com/fiunchinho/dmz-controller "Go Report"
-[9]: https://godoc.org/fiunchinho/dmz-controller?status.svg "GoDoc badge"
-[10]: https://godoc.org/fiunchinho/dmz-controller "GoDoc"
+[9]: https://godoc.org/github.com/fiunchinho/dmz-controller?status.svg "GoDoc badge"
+[10]: https://godoc.org/github.com/fiunchinho/dmz-controller "GoDoc"
 [11]: https://img.shields.io/docker/pulls/fiunchinho/dmz-controller.svg?maxAge=604800 "Docker Pulls"
 [12]: https://hub.docker.com/r/fiunchinho/dmz-controller/ "DockerHub"
 [13]: https://codeclimate.com/github/fiunchinho/dmz-controller/badges/gpa.svg "Code Climate badge"
@@ -21,15 +21,18 @@
 This is a kubernetes controller that watches Ingress objects that contain a specific annotation and adds whitelisted addresses to it.
 
 ## Motivation
-We expose applications running on Kubernetes using Ingress rules. These applications can be either:
-- Public: all the internet can access this application
-- Private: only reachable from known sources like offices, VPN's and so on. 
+We use Ingress rules to expose applications that need to be accessed by other applications running outside our Kubernetes cluster.
+Even though they are exposed to outside the cluster, sometimes we don't want them to be exposed to the whole internet.
+We want to be able to whitelist the known sources that are allowed to access those applications, like offices or VPN's IPs.
+So basically there are two type of applications
+- Public: everybody can access this application
+- Private: only traffic from known sources (like offices, VPN's and so on) is allowed 
 
-Handling these lists of kwown sources is costly and error prone. This controllers tries to automate this process.
+Manually handling these lists of kwown sources is costly and error prone. This controllers tries to automate this process.
 
 # How it works
 Whenever an Ingress object is created containing the annotation `armesto.net/ingress: "office"`,
-this controller will add the `ingress.kubernetes.io/whitelist-source-range` annotation to the Ingress object with some addresses.
+this controller will add the `ingress.kubernetes.io/whitelist-source-range` annotation to the Ingress object with some IP addresses.
 
 ```yaml
 apiVersion: extensions/v1beta1
@@ -45,8 +48,9 @@ spec:
     servicePort: 80
 ```
 
-Which ones? The whitelisted addresses come from a ConfigMap that contains a map for different sources. The addresses in the key specified in the `armesto.net/ingress` annotation will be whitelisted.
-If we'd have the following `ConfigMap`, and our Ingress object annotated with `armesto.net/ingress: "office"`, the addresses 8.8.8.8/32 and 8.8.4.4/32 would be whitelisted.
+Which addresses? The whitelisted addresses come from a `ConfigMap` that contains a map where we can store different sources.
+The addresses named with the key specified in the `armesto.net/ingress` Ingress annotation will be whitelisted.
+If we'd have the following `ConfigMap`, and our Ingress object annotated with `armesto.net/ingress: "office"`, the addresses `8.8.8.8/32` and `8.8.4.4/32` would be whitelisted.
 
 ```yaml
 apiVersion: v1
