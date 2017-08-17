@@ -31,26 +31,26 @@ So basically there are two type of applications
 Manually handling these lists of kwown sources is costly and error prone. This controllers tries to automate this process.
 
 # How it works
-Whenever an Ingress object is created containing the annotation `armesto.net/ingress: "office"`,
-this controller will add the `ingress.kubernetes.io/whitelist-source-range` annotation to the Ingress object with some IP addresses.
+Let's say we want to create an `Ingress` object to expose our application to the outside.
+We could manually add IP's to the [ingress.kubernetes.io/whitelist-source-range annotation](https://github.com/kubernetes/ingress/blob/master/controllers/nginx/configuration.md#whitelist-source-range) to allow traffic from those IP's.
+Instead, we'll add the `armesto.net/ingress` annotation, so the dmz-controller will take care of adding the whitelisted IP's. For example:
 
 ```yaml
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: test-ingress
+  name: my-application-ingress
   namespace: default
   annotations:
-    armesto.net/ingress: vpn
+    armesto.net/ingress: office
 spec:
   backend:
-    serviceName: testsvc
+    serviceName: my-application-service
     servicePort: 80
 ```
 
-Which addresses? The whitelisted addresses come from a `ConfigMap` that contains a map where we can store different sources.
-The addresses named with the key specified in the `armesto.net/ingress` Ingress annotation will be whitelisted.
-If we'd have the following `ConfigMap`, and our Ingress object annotated with `armesto.net/ingress: "office"`, the addresses `8.8.8.8/32` and `8.8.4.4/32` would be whitelisted.
+Once we create the Ingress object, this controller will add the `ingress.kubernetes.io/whitelist-source-range` annotation with some IP addresses.
+These addresses come from the dmz-controller `ConfigMap` that contains a map where we can store different IP sources, like
 
 ```yaml
 apiVersion: v1
@@ -62,10 +62,39 @@ data:
   office: 8.8.8.8/32,8.8.4.4/32
   vpn: 123.123.123.123/28
 ```
-The names of the keys in the ConfigMap are arbitrary, so you can write whatever data you like.
 
-The controller is also watching the ConfigMap, so whenever a change is made to the ConfigMap (to add/remove addresses, for example), the controller will go over all the Ingress objects to see if a change needs to be done to the whitelist.
+The IP's named with the key specified in the `armesto.net/ingress` annotation will be whitelisted.
+Using the previous `Ingress` and `ConfigMap`, the IP's `8.8.8.8/32` and `8.8.4.4/32` would be whitelisted, because they are the office IP's.
+
+The names of the keys in the `ConfigMap` are arbitrary: you can choose the names you like.
+
+The controller is also watching the `ConfigMap`, so whenever a change is made (to add/remove addresses, for example), the controller will go over all the `Ingress` objects to see if a change needs to be done to its whitelist.
+
+## Hybrid providers
+The controller will respect whitelisted sources that were added to the Ingress object manually.
+It only manages the [CIDRs](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing) that come from the ConfigMap, leaving the rest untouched.
+
+It accomplishes it by adding an internal annotation `dmz-controller` to keep track of the addresses managed by the controller that came from the `ConfigMap`.
 
 ## Multiple providers
 You can even choose multiple providers.
-If we'd have the following `ConfigMap`, and our Ingress object annotated with `armesto.net/ingress: "office,vpn"`, the addresses 8.8.8.8/32, 8.8.4.4/32 and 123.123.123.123/28 would be whitelisted.
+
+```yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: my-application-ingress
+  namespace: default
+  annotations:
+    armesto.net/ingress: office,vpn
+spec:
+  backend:
+    serviceName: my-application-service
+    servicePort: 80
+```
+
+In this case, the addresses `8.8.8.8/32`, `8.8.4.4/32` and `123.123.123.123/28` would be added to the `Ingress` whitelist.
+
+## Address Format
+Addresses added to the `ConfigMap` need to be valid IP's or [CIDRs](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing).
+If you store an IP, it will be transformed to a CIDR. For example, if you add the `8.8.8.8` IP, the controller will use it as if you had added the `8.8.8.8/32` CIDR. 
