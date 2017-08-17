@@ -12,7 +12,7 @@
 [9]: https://godoc.org/fiunchinho/dmz-controller?status.svg "GoDoc badge"
 [10]: https://godoc.org/fiunchinho/dmz-controller "GoDoc"
 [11]: https://img.shields.io/docker/pulls/fiunchinho/dmz-controller.svg?maxAge=604800 "Docker Pulls"
-[12]: https://hub.docker.com/u/fiunchinho/dmz-controller "DockerHub"
+[12]: https://hub.docker.com/r/fiunchinho/dmz-controller/ "DockerHub"
 [13]: https://codeclimate.com/github/fiunchinho/dmz-controller/badges/gpa.svg "Code Climate badge"
 [14]: https://codeclimate.com/github/fiunchinho/dmz-controller "Code Climate"
 [15]: https://codeclimate.com/github/fiunchinho/dmz-controller/badges/issue_count.svg "Code Climate badge"
