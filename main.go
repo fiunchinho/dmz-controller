@@ -47,7 +47,7 @@ var (
 )
 
 func getNamespace() string {
-	if ns := os.Getenv("TILLER_NAMESPACE"); ns != "" {
+	if ns := os.Getenv("NAMESPACE"); ns != "" {
 		return ns
 	}
 
