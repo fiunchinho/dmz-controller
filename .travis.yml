@@ -10,3 +10,5 @@ deploy:
   provider: script
   script: bin/publish
   skip_cleanup: true
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
