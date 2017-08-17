@@ -17,7 +17,7 @@ deps:
 
 lint: deps
 	gometalinter.v1 --install --update
-	gometalinter.v1 --checkstyle --vendor --disable-all -E goimports -E vet -E goconst -E staticcheck -E structcheck -E unparam -E unused -E vetshadow -E varcheck --deadline=50s -j 11 "${PWD}/..." | tee /dev/tty > checkstyle-report.xml; test ${PIPESTATUS[0]} -eq 0
+	gometalinter.v1 --checkstyle --vendor --disable-all -E vet -E goconst -E golint -E goimports -E misspell --deadline=50s -j 11 "${PWD}/..."
 
 package: compile
 	docker build -t "${DOCKER_IMAGE}" "."
