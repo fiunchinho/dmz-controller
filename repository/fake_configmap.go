@@ -6,7 +6,6 @@ import (
 
 // Ingress acceses k8s API to fetch/save Ingress objects
 type FakeConfigMap struct {
-	objects    []v1.ConfigMap
 	configMaps map[string]v1.ConfigMap
 }
 

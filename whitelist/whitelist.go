@@ -39,9 +39,10 @@ func (whitelist *Whitelist) Add(sourceWhitelist []string) {
 	whitelist.Ips = RemoveDuplicates(append(whitelist.Ips, validateIPs(sourceWhitelist)...))
 }
 
+// Minus removes IP's from given Whitelist from current Whitelist
 func (whitelist *Whitelist) Minus(substractedWhitelist *Whitelist) {
 	for i := len(substractedWhitelist.Ips) - 1; i >= 0; i-- {
-		index := SliceIndex(whitelist.Ips, substractedWhitelist.Ips[i])
+		index := findValue(whitelist.Ips, substractedWhitelist.Ips[i])
 		if index > -1 {
 			whitelist.Ips = append(whitelist.Ips[:index], whitelist.Ips[index+1:]...)
 		}
@@ -90,7 +91,8 @@ func RemoveDuplicates(elements []string) []string {
 	return result
 }
 
-func SliceIndex(slice []string, valueToFind string) int {
+// findValue returns the slice key where the value is stored
+func findValue(slice []string, valueToFind string) int {
 	for key, v := range slice {
 		if v == valueToFind {
 			return key

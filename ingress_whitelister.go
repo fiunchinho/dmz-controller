@@ -36,9 +36,6 @@ func (whitelister *IngressWhitelister) Whitelist(name string) error {
 	// Here we try to reconciliate the current and desired state.
 	// If there is an error, we skip calling `queue.Forget`, causing the resource to be requeued at a later time.
 	log.Printf("Processing Ingress resource '%s'", ingress.Name)
-	if ingress.Annotations == nil {
-		ingress.Annotations = make(map[string]string)
-	}
 
 	provider, ok := ingress.Annotations[DMZProvidersAnnotation]
 	if ok {

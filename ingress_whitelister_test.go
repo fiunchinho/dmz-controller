@@ -33,6 +33,30 @@ func TestIpsAreAdded(t *testing.T) {
 	assert.NotContains(ingress.Annotations[IngressWhitelistAnnotation], "1.2.3.4/32", "This IP should not be here")
 }
 
+func TestThatNothingChangesWhenTheDMZAnnotationIsNotPresent(t *testing.T) {
+	ingressRepository := repository.NewFakeIngressRepository()
+	configMapRepository := repository.NewFakeConfigMapRepository()
+	irrelevantNamespace := "namespace"
+	ingressName := "my-ingress"
+	ingress := &v1beta1.Ingress{}
+	ingress.Name = ingressName
+
+	ingressRepository.Save(ingress)
+
+	configMap := &v1.ConfigMap{
+		Data: map[string]string{
+			"offices": "1.2.3.4/32",
+		},
+	}
+	configMap.Name = DMZConfigMapName
+	configMapRepository.Save(configMap)
+
+	NewIngressWhitelister(irrelevantNamespace, ingressRepository, configMapRepository).Whitelist(ingressName)
+
+	assert := assert.New(t)
+	assert.NotContains(ingress.Annotations, IngressWhitelistAnnotation, "It's not annotated to be whitelisted")
+}
+
 func TestThatAssignIpsWhenThereAreTwoIpSources(t *testing.T) {
 	ingressRepository := repository.NewFakeIngressRepository()
 	configMapRepository := repository.NewFakeConfigMapRepository()
@@ -56,6 +80,30 @@ func TestThatAssignIpsWhenThereAreTwoIpSources(t *testing.T) {
 	assert := assert.New(t)
 	assert.Contains(ingress.Annotations[IngressWhitelistAnnotation], "4.4.4.4/32", "IP is missing")
 	assert.Contains(ingress.Annotations[IngressWhitelistAnnotation], "1.2.3.4/32", "IP is missing")
+}
+
+func TestThatItKeepsExistingWhitelistedIpsNotManagedByTheController(t *testing.T) {
+	ingressRepository := repository.NewFakeIngressRepository()
+	configMapRepository := repository.NewFakeConfigMapRepository()
+	irrelevantNamespace := "namespace"
+	ingressName := "my-ingress"
+	ingress := BuildIngressObject().Named(ingressName).WithAnnotation(IngressWhitelistAnnotation, "123.1.2.3/32").WithAnnotation(DMZProvidersAnnotation, "offices").Build()
+
+	ingressRepository.Save(ingress)
+
+	configMap := &v1.ConfigMap{
+		Data: map[string]string{
+			"offices": "1.2.3.4/32",
+		},
+	}
+	configMap.Name = DMZConfigMapName
+	configMapRepository.Save(configMap)
+
+	NewIngressWhitelister(irrelevantNamespace, ingressRepository, configMapRepository).Whitelist(ingressName)
+
+	assert := assert.New(t)
+	assert.Contains(ingress.Annotations[IngressWhitelistAnnotation], "1.2.3.4/32", "IP is missing")
+	assert.Contains(ingress.Annotations[IngressWhitelistAnnotation], "123.1.2.3/32", "IP that was whitelisted before is missing now")
 }
 
 func TestUpdatesIpsWhenProviderChanges(t *testing.T) {
@@ -94,13 +142,14 @@ func TestUpdatesIpsWhenProviderChanges(t *testing.T) {
 }
 
 func BuildIngressObject() *IngressBuilder {
-	return &IngressBuilder{}
+	return &IngressBuilder{
+		annotations: make(map[string]string),
+	}
 }
 
 type IngressBuilder struct {
-	ingressName     string
-	annotationKey   string
-	annotationValue string
+	ingressName string
+	annotations map[string]string
 }
 
 func (builder *IngressBuilder) Named(name string) (*IngressBuilder) {
@@ -110,8 +159,7 @@ func (builder *IngressBuilder) Named(name string) (*IngressBuilder) {
 }
 
 func (builder *IngressBuilder) WithAnnotation(key string, value string) (*IngressBuilder) {
-	builder.annotationKey = key
-	builder.annotationValue = value
+	builder.annotations[key] = value
 
 	return builder
 }
@@ -119,8 +167,7 @@ func (builder *IngressBuilder) WithAnnotation(key string, value string) (*Ingres
 func (builder *IngressBuilder) Build() (*v1beta1.Ingress) {
 	ingress := &v1beta1.Ingress{}
 	ingress.Name = builder.ingressName
-	ingress.Annotations = make(map[string]string)
-	ingress.Annotations[builder.annotationKey] = builder.annotationValue
+	ingress.Annotations = builder.annotations
 
 	return ingress
 }

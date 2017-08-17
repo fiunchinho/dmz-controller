@@ -57,9 +57,15 @@ func TestThatItIgnoresAnInvalidIp(t *testing.T) {
 
 func TestThatItRemovesItemsFromSecondWhitelist(t *testing.T) {
 	whitelist := NewWhitelistFromString("1.2.3.4/32,4.4.4.4,8.8.8.8")
-	whitelist.Minus(NewWhitelistFromString("4.4.4.4/32"))
+	whitelist.Minus(NewWhitelistFromString("4.4.4.4/32,3.3.3.3/28"))
 	assert := assert.New(t)
 	assert.Contains(whitelist.Ips, "1.2.3.4/32", "It should only substract IPs from second whitelist")
 	assert.Contains(whitelist.Ips, "8.8.8.8/32", "It should only substract IPs from second whitelist")
 	assert.Len(whitelist.Ips, 2, "It must remove IP from the substracted whitelist")
+}
+
+func TestThatTransformWhitelistToString(t *testing.T) {
+	whitelist := NewWhitelistFromString("1.2.3.4/32,4.4.4.4,8.8.8.8")
+	assert := assert.New(t)
+	assert.Equal("1.2.3.4/32,4.4.4.4/32,8.8.8.8/32", whitelist.ToString(), "String representation is wrong")
 }
