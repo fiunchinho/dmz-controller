@@ -11,16 +11,17 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
+	"io/ioutil"
+	"os"
+	"strings"
+
+	"github.com/fiunchinho/dmz-controller/repository"
+	"github.com/golang/glog"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	"github.com/golang/glog"
 	"k8s.io/client-go/pkg/api/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"github.com/fiunchinho/dmz-controller/repository"
-	"os"
-	"io/ioutil"
-	"strings"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 const DMZConfigMapName = "dmz-controller"
@@ -44,7 +45,7 @@ var (
 	client kubernetes.Interface
 )
 
-func getNamespace() (string) {
+func getNamespace() string {
 	if ns := os.Getenv("TILLER_NAMESPACE"); ns != "" {
 		return ns
 	}

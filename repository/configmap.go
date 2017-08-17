@@ -1,9 +1,9 @@
 package repository
 
 import (
+	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
-	"k8s.io/client-go/informers"
 )
 
 // ConfigMap acceses k8s API to fetch/save ConfigMap objects

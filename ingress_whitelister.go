@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 	"log"
-	"github.com/fiunchinho/dmz-controller/whitelist"
 	"strings"
+
 	"github.com/fiunchinho/dmz-controller/repository"
+	"github.com/fiunchinho/dmz-controller/whitelist"
 )
 
 const IngressWhitelistAnnotation = "ingress.kubernetes.io/whitelist-source-range"

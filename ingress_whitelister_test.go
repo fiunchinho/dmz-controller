@@ -2,10 +2,11 @@ package main
 
 import (
 	"testing"
-	"github.com/stretchr/testify/assert"
-	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
+
 	"github.com/fiunchinho/dmz-controller/repository"
+	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/pkg/api/v1"
+	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 )
 
 func TestIpsAreAdded(t *testing.T) {
@@ -152,19 +153,19 @@ type IngressBuilder struct {
 	annotations map[string]string
 }
 
-func (builder *IngressBuilder) Named(name string) (*IngressBuilder) {
+func (builder *IngressBuilder) Named(name string) *IngressBuilder {
 	builder.ingressName = name
 
 	return builder
 }
 
-func (builder *IngressBuilder) WithAnnotation(key string, value string) (*IngressBuilder) {
+func (builder *IngressBuilder) WithAnnotation(key string, value string) *IngressBuilder {
 	builder.annotations[key] = value
 
 	return builder
 }
 
-func (builder *IngressBuilder) Build() (*v1beta1.Ingress) {
+func (builder *IngressBuilder) Build() *v1beta1.Ingress {
 	ingress := &v1beta1.Ingress{}
 	ingress.Name = builder.ingressName
 	ingress.Annotations = builder.annotations

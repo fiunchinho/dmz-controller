@@ -1,8 +1,9 @@
 package whitelist
 
 import (
-	"strings"
 	"net"
+	"strings"
+
 	"github.com/golang/glog"
 )
 
@@ -11,21 +12,21 @@ type Whitelist struct {
 	Ips []string
 }
 
-func NewWhitelistFromString(ipsAsString string) (*Whitelist) {
+func NewWhitelistFromString(ipsAsString string) *Whitelist {
 	whitelist := new(Whitelist)
 	whitelist.Add(strings.Split(ipsAsString, ","))
 
 	return whitelist
 }
 
-func NewWhitelistFromArray(ips []string) (*Whitelist) {
+func NewWhitelistFromArray(ips []string) *Whitelist {
 	whitelist := new(Whitelist)
 	whitelist.Add(ips)
 
 	return whitelist
 }
 
-func NewEmptyWhitelist() (*Whitelist) {
+func NewEmptyWhitelist() *Whitelist {
 	return new(Whitelist)
 }
 
