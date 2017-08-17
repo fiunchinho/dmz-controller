@@ -30,7 +30,13 @@ So basically there are two type of applications
 
 Manually handling these lists of kwown sources is costly and error prone. This controllers tries to automate this process.
 
-# How it works
+## Installation
+We provide a [Helm chart](https://github.com/kubernetes/helm/) in this repository to easily install the controller, which uses [a public Docker image from DockerHub](https://hub.docker.com/r/fiunchinho/dmz-controller/).
+```
+$ helm upgrade --install --namespace="default" "dmz-controller" "./helm/dmz-controller"
+```
+
+## How it works
 Let's say we want to create an `Ingress` object to expose our application to the outside.
 We could manually add IP's to the [ingress.kubernetes.io/whitelist-source-range annotation](https://github.com/kubernetes/ingress/blob/master/controllers/nginx/configuration.md#whitelist-source-range) to allow traffic from those IP's.
 Instead, we'll add the `armesto.net/ingress` annotation, so the dmz-controller will take care of adding the whitelisted IP's. For example:
