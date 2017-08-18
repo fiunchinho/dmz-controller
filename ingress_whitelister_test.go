@@ -142,6 +142,31 @@ func TestUpdatesIpsWhenProviderChanges(t *testing.T) {
 	assert.Contains(ingress.Annotations[IngressWhitelistAnnotation], "1.2.3.4/32", "IP is missing")
 }
 
+func TestThatItSkipsNonExistingProviders(t *testing.T) {
+	ingressRepository := repository.NewFakeIngressRepository()
+	configMapRepository := repository.NewFakeConfigMapRepository()
+	irrelevantNamespace := "namespace"
+	ingressName := "my-ingress"
+	ingress := BuildIngressObject().Named(ingressName).WithAnnotation(DMZProvidersAnnotation, "vpn,non-existing,offices").Build()
+
+	ingressRepository.Save(ingress)
+
+	configMap := &v1.ConfigMap{
+		Data: map[string]string{
+			"offices": "1.2.3.4/32",
+			"vpn":     "4.4.4.4/32",
+		},
+	}
+	configMap.Name = DMZConfigMapName
+	configMapRepository.Save(configMap)
+
+	NewIngressWhitelister(irrelevantNamespace, ingressRepository, configMapRepository).Whitelist(ingressName)
+
+	assert := assert.New(t)
+	assert.Contains(ingress.Annotations[IngressWhitelistAnnotation], "4.4.4.4/32", "IP is missing")
+	assert.Contains(ingress.Annotations[IngressWhitelistAnnotation], "1.2.3.4/32", "IP is missing")
+}
+
 func BuildIngressObject() *IngressBuilder {
 	return &IngressBuilder{
 		annotations: make(map[string]string),
