@@ -13,14 +13,14 @@ linux: deps
 deps:
 	glide install
 
-lint: deps
+lint:
 	gometalinter.v1 --install --update
 	gometalinter.v1 --vendor --disable-all -E vet -E goconst -E golint -E goimports -E misspell --deadline=50s -j 11 "${PWD}/..."
 
 package: linux
 	docker build -t "${DOCKER_IMAGE}":"${DOCKER_TAG}" "."
 
-test: deps
+test:
 	go test -cover `glide novendor`
 
 coverage: test
