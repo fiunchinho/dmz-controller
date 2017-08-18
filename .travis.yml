@@ -5,10 +5,10 @@ sudo: required
 services:
 - docker
 install: bin/install
-script: bin/build && bin/coverage
+script: make lint build test coverage
 deploy:
   provider: script
-  script: bin/publish
+  script: make publish DOCKER_TAG=${TRAVIS_COMMIT}
   skip_cleanup: true
 after_success:
 - bash <(curl -s https://codecov.io/bash)

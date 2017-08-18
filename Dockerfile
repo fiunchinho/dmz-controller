@@ -10,4 +10,4 @@ RUN apk add --update --repository https://dl-cdn.alpinelinux.org/alpine/edge/com
     rm -rf /var/cache/apk/* /tmp/*
 
 USER app
-ADD app /opt/app
+ADD dmz-controller /opt/app
