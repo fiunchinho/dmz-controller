@@ -1,8 +1,9 @@
 # Default values for dmz-controller.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-replicaCount: 1
 image:
   repository: fiunchinho/dmz-controller
   tag: latest
   pullPolicy: Never
+# List of CIDRs to whitelist
+#cidrs:
+#  vpn: 1.1.1.1/32
+#  office: 2.2.2.2/28
