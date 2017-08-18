@@ -30,11 +30,38 @@ So basically there are two type of applications
 
 Manually handling these lists of kwown sources is costly and error prone. This controllers tries to automate this process.
 
-## Installation
-We provide a [Helm chart](https://github.com/kubernetes/helm/) in this repository to easily install the controller, which uses [a public Docker image from DockerHub](https://hub.docker.com/r/fiunchinho/dmz-controller/).
-```
-$ helm upgrade --install --namespace="default" "dmz-controller" "./helm/dmz-controller"
-```
+## Usage
+### Running outside of the Kubernetes cluster:
+
+First build the `dmz-controller` binary by running:
+
+    make build
+
+This will produce a binary file that you can start by running:
+
+    dmz-controller --kubeconfig ~/.kube/config
+
+Try out the controller creating our example ConfigMap and Ingress objects:
+
+    kubectl create -f examples/
+
+This will create a 1-pod deployment of an `nginx` Habitat service.
+
+### Running inside of the Kubernetes cluster:
+First build the image:
+
+    make package
+
+This will produce [a public Docker image on DockerHub](https://hub.docker.com/r/fiunchinho/dmz-controller/), which can then be deployed to your cluster.
+
+The name of the generated image can be changed with an `DOCKER_IMAGE` variable, for example `make package DOCKER_IMAGE=you/dmz`.
+Use the `DOCKER_TAG` variable to change the tag to something else than `latest`.
+
+Then install the controller in the cluster using helm.
+We provide a [Helm chart](https://github.com/kubernetes/helm/) in this repository. You can install it:
+
+    make helm
+
 
 ## How it works
 Let's say we want to create an `Ingress` object to expose our application to the outside.

@@ -1,0 +1,12 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: my-application-ingress
+  namespace: default
+  annotations:
+    armesto.net/ingress: office
+spec:
+  backend:
+    serviceName: my-application-service
+    servicePort: 80

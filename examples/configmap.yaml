@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dmz-controller
+  namespace: default
+data:
+  office: 8.8.8.8/32,8.8.4.4/32
+  vpn: 123.123.123.123/28
