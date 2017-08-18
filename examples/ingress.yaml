@@ -2,11 +2,10 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: my-application-already-whitelisted-ingress
+  name: my-application-ingress
   namespace: default
   annotations:
-    armesto.net/ingress: office
-    ingress.kubernetes.io/whitelist-source-range: 56.99.99.99/32
+    armesto.net/ingress: vpn,office
 spec:
   backend:
     serviceName: my-application-service

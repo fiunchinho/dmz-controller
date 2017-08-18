@@ -39,13 +39,16 @@ First build the `dmz-controller` binary by running:
 
 This will produce a binary file that you can start by running:
 
-    dmz-controller --kubeconfig ~/.kube/config
+    NAMESPACE=default dmz-controller --kubeconfig ~/.kube/config
 
 Try out the controller creating our example ConfigMap and Ingress objects:
 
     kubectl create -f examples/
 
 This will create a `ConfigMap` with some CIDRs, and an `Ingress` with the right annotation.
+If you want to play around with different CIDRs, try changing the `ConfigMap`
+
+    kubectl edit configmap dmz-controller
 
 ### Running inside of the Kubernetes cluster:
 First build the image:
@@ -62,6 +65,13 @@ We provide a [Helm chart](https://github.com/kubernetes/helm/) in this repositor
 
     make helm
 
+Try out the controller creating our example ConfigMap and Ingress objects:
+
+    kubectl create -f examples/
+
+If you want to play around with different CIDRs, try passing different values to the `ConfigMap`
+    
+    helm upgrade --install --namespace="default" "dmz-controller" "./helm/dmz-controller" --set cidrs.office="1.2.3.4/32",cidrs.vpn="5.6.7.8/32"
 
 ## How it works
 Let's say we want to create an `Ingress` object to expose our application to the outside.
