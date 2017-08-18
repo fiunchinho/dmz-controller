@@ -45,7 +45,7 @@ Try out the controller creating our example ConfigMap and Ingress objects:
 
     kubectl create -f examples/
 
-This will create a 1-pod deployment of an `nginx` Habitat service.
+This will create a `ConfigMap` with some CIDRs, and an `Ingress` with the right annotation.
 
 ### Running inside of the Kubernetes cluster:
 First build the image:
