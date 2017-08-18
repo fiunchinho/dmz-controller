@@ -1,8 +1,9 @@
 package repository
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 )
 
