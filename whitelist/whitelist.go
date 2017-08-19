@@ -14,14 +14,19 @@ type Whitelist struct {
 
 // NewWhitelistFromString constructs a Whitelist from a given string of addresses
 func NewWhitelistFromString(ipsAsString string) *Whitelist {
-	whitelist := new(Whitelist)
-	whitelist.Add(strings.Split(ipsAsString, ","))
+	if ipsAsString == "" {
+		return NewEmptyWhitelist()
+	}
 
-	return whitelist
+	return NewWhitelistFromArray(strings.Split(ipsAsString, ","))
 }
 
 // NewWhitelistFromArray constructs a Whitelist from a given array of addresses
 func NewWhitelistFromArray(ips []string) *Whitelist {
+	if len(ips) == 0 {
+		return NewEmptyWhitelist()
+	}
+
 	whitelist := new(Whitelist)
 	whitelist.Add(ips)
 
@@ -61,16 +66,18 @@ func (whitelist *Whitelist) ToString() string {
 // validateIPs makes sure all the IP's that we want to add are valid IPs or valid CIDR
 func validateIPs(sourceWhitelist []string) []string {
 	for i := len(sourceWhitelist) - 1; i >= 0; i-- {
-		_, _, err := net.ParseCIDR(sourceWhitelist[i])
-		if err != nil {
-			sourceWhitelist[i] += "/32"
-			_, _, err = net.ParseCIDR(sourceWhitelist[i])
-		}
+		if sourceWhitelist[i] != "" {
+			_, _, err := net.ParseCIDR(sourceWhitelist[i])
+			if err != nil {
+				sourceWhitelist[i] += "/32"
+				_, _, err = net.ParseCIDR(sourceWhitelist[i])
+			}
 
-		if err != nil {
-			glog.Info(err)
-			glog.Infof("The following IP won't be added to the whitelist: %s", sourceWhitelist[i])
-			sourceWhitelist = append(sourceWhitelist[:i], sourceWhitelist[i+1:]...)
+			if err != nil {
+				glog.Info(err)
+				glog.Infof("The following IP won't be added to the whitelist: %s", sourceWhitelist[i])
+				sourceWhitelist = append(sourceWhitelist[:i], sourceWhitelist[i+1:]...)
+			}
 		}
 	}
 	return sourceWhitelist

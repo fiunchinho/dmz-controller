@@ -64,13 +64,16 @@ func (whitelister *IngressWhitelister) Whitelist(name string) error {
 	return nil
 }
 
-func getWhitelistFromProvider(provider string, whitelistProviders map[string]string) *whitelist.Whitelist {
+func getWhitelistFromProvider(providers string, whitelistProviders map[string]string) *whitelist.Whitelist {
 	whitelistToApply := whitelist.NewEmptyWhitelist()
-	for _, value := range strings.Split(provider, ",") {
-		ipsToWhitelist := whitelistProviders[strings.TrimSpace(value)]
-		log.Printf("Whitelisting %s", ipsToWhitelist)
-		providerWhitelist := whitelist.NewWhitelistFromString(ipsToWhitelist)
-		whitelistToApply.Merge(providerWhitelist)
+	for _, value := range strings.Split(providers, ",") {
+		provider := strings.TrimSpace(value)
+		if _, ok := whitelistProviders[provider]; ok {
+			ipsToWhitelist := whitelistProviders[provider]
+			log.Printf("Whitelisting %s", ipsToWhitelist)
+			providerWhitelist := whitelist.NewWhitelistFromString(ipsToWhitelist)
+			whitelistToApply.Merge(providerWhitelist)
+		}
 	}
 
 	return whitelistToApply

@@ -7,6 +7,12 @@ import (
 )
 
 func TestWhiteListFromString(t *testing.T) {
+	whitelist := NewWhitelistFromString("1.2.3.4")
+	assert := assert.New(t)
+	assert.Contains(whitelist.Ips, "1.2.3.4/32", "IP is missing")
+}
+
+func TestThatItCreatesWhiteListFromStringContainingSeveralIps(t *testing.T) {
 	whitelist := NewWhitelistFromString("1.2.3.4,8.8.8.0/28")
 	assert := assert.New(t)
 	assert.Contains(whitelist.Ips, "1.2.3.4/32", "Initial ip's must appear")
@@ -24,6 +30,18 @@ func TestEmptyWhiteList(t *testing.T) {
 	whitelist := NewEmptyWhitelist()
 	assert := assert.New(t)
 	assert.Len(whitelist.Ips, 0, "Empty whitelist must contain 0 elements")
+}
+
+func TestThatEmptyStringReturnsEmptyWhitelist(t *testing.T) {
+	whitelist := NewWhitelistFromString("")
+	assert := assert.New(t)
+	assert.Len(whitelist.Ips, 0, "It must contain no IPs")
+}
+
+func TestThatEmptyArrayReturnsEmptyWhiteList(t *testing.T) {
+	whitelist := NewWhitelistFromArray([]string{})
+	assert := assert.New(t)
+	assert.Len(whitelist.Ips, 0, "It must contain no IPs")
 }
 
 func TestWhiteListRemoveDuplicates(t *testing.T) {
@@ -56,7 +74,7 @@ func TestThatItIgnoresAnInvalidIp(t *testing.T) {
 	assert.Len(whitelist.Ips, 2, "It must ignore non valid IP addresses")
 }
 
-func TestThatItRemovesItemsFromSecondWhitelist(t *testing.T) {
+func TestThatItRemovesItemsFromAnotherWhitelist(t *testing.T) {
 	whitelist := NewWhitelistFromString("1.2.3.4/32,4.4.4.4,8.8.8.8")
 	whitelist.Minus(NewWhitelistFromString("4.4.4.4/32,3.3.3.3/28"))
 	assert := assert.New(t)

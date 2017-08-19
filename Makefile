@@ -4,7 +4,7 @@ K8S_NAMESPACE:= default
 
 .PHONY: build linux deps lint package test coverage helm publish
 
-build: deps
+build:
 	go build -i -o dmz-controller
 
 linux: deps
