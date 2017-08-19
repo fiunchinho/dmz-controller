@@ -2,13 +2,10 @@ DOCKER_IMAGE := fiunchinho/dmz-controller
 DOCKER_TAG   := latest
 K8S_NAMESPACE:= default
 
-.PHONY: build linux deps lint package test coverage helm publish
+.PHONY: build deps lint package test coverage helm publish
 
 build:
 	go build -i -o dmz-controller
-
-linux:
-    env GOOS=linux go build -o dmz-controller
 
 deps:
 	glide install
@@ -17,13 +14,14 @@ lint:
 	gometalinter.v1 --install --update
 	gometalinter.v1 --vendor --disable-all -E vet -E goconst -E golint -E goimports -E misspell --deadline=50s -j 11 "${PWD}/..."
 
-package: linux
+package:
+	env GOOS=linux go build -o dmz-controller
 	docker build -t "${DOCKER_IMAGE}":"${DOCKER_TAG}" "."
 
 test:
-	go test -cover `glide novendor`
+	go test `glide novendor`
 
-coverage: test
+coverage:
 	bin/coverage
 
 helm: package
