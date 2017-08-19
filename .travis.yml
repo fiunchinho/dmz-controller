@@ -5,7 +5,7 @@ sudo: required
 services:
 - docker
 install: bin/install
-script: make lint build test
+script: make lint deps package test
 deploy:
   provider: script
   script: make publish DOCKER_TAG=${TRAVIS_COMMIT}

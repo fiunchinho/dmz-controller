@@ -7,7 +7,7 @@ K8S_NAMESPACE:= default
 build:
 	go build -i -o dmz-controller
 
-linux: deps
+linux:
     env GOOS=linux go build -o dmz-controller
 
 deps:
