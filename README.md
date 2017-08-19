@@ -16,26 +16,25 @@
 [13]: https://codeclimate.com/github/fiunchinho/dmz-controller/badges/issue_count.svg "Code Climate badge"
 [14]: https://codeclimate.com/github/fiunchinho/dmz-controller "Code Climate Issues"
 
-This is a kubernetes controller that watches Ingress objects that contain a specific annotation and adds whitelisted addresses to it.
+This is a kubernetes controller that watches a certain namespace for Ingress objects that contain a specific annotation and adds [whitelisted addresses](https://github.com/kubernetes/ingress/blob/master/controllers/nginx/configuration.md#whitelist-source-range) to it.
 
 ## Motivation
 We use Ingress rules to expose applications that need to be accessed by other applications running outside our Kubernetes cluster.
 Even though they are exposed to outside the cluster, sometimes we don't want them to be exposed to the whole internet.
-We want to be able to whitelist the known sources that are allowed to access those applications, like offices or VPN's IPs.
+We want to be able to [whitelist](https://github.com/kubernetes/ingress/blob/master/controllers/nginx/configuration.md#whitelist-source-range) the known sources that are allowed to access those applications, like offices or VPN's IPs.
 So basically there are two type of applications
-- Public: everybody can access this application
-- Private: only traffic from known sources (like offices, VPN's and so on) is allowed 
+- **Public**: everybody can access this application
+- **Private**: only traffic from known sources (like offices, VPN's and so on) is allowed 
 
-Manually handling these lists of kwown sources is costly and error prone. This controllers tries to automate this process.
+Manually handling these lists of known sources is costly and error prone. This controllers tries to automate this process.
 
 ## Usage
 ### Running outside of the Kubernetes cluster:
-
 First build the `dmz-controller` binary by running:
 
     make build
 
-This will produce a binary file that you can start by running:
+This will produce a binary file that you can start by passing the cluster configuration file and the namespace to watch:
 
     NAMESPACE=default dmz-controller --kubeconfig ~/.kube/config
 
@@ -70,6 +69,8 @@ Try out the controller creating our example ConfigMap and Ingress objects:
 If you want to play around with different CIDRs, try passing different values to the `ConfigMap`
     
     helm upgrade --install --namespace="default" "dmz-controller" "./helm/dmz-controller" --set cidrs.office="1.2.3.4/32",cidrs.vpn="5.6.7.8/32"
+
+It will watch for Ingress objects on the same namespace where the controller is running, unless you pass a `$NAMESPACE` environment variable to the controller.
 
 ## How it works
 Let's say we want to create an `Ingress` object to expose our application to the outside.
@@ -106,6 +107,22 @@ data:
 
 The IP's named with the key specified in the `armesto.net/ingress` annotation will be whitelisted.
 Using the previous `Ingress` and `ConfigMap`, the IP's `8.8.8.8/32` and `8.8.4.4/32` would be whitelisted, because they are the office IP's.
+
+```yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: my-application-ingress
+  namespace: default
+  annotations:
+    armesto.net/ingress: office
+    ingress.kubernetes.io/whitelist-source-range: 8.8.8.8/32,8.8.4.4/32
+    dmz-controller: 8.8.8.8/32,8.8.4.4/32
+spec:
+  backend:
+    serviceName: my-application-service
+    servicePort: 80
+```
 
 The names of the keys in the `ConfigMap` are arbitrary: you can choose the names you like.
 
