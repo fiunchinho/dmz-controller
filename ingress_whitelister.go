@@ -1,19 +1,23 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"strings"
 
 	"github.com/fiunchinho/dmz-controller/repository"
 	"github.com/fiunchinho/dmz-controller/whitelist"
+	"github.com/golang/glog"
 )
 
-// IngressWhitelistAnnotation is the whitelist annotation used by the Kubernetes Ingress
-const IngressWhitelistAnnotation = "ingress.kubernetes.io/whitelist-source-range"
+const (
+	// IngressWhitelistAnnotation is the whitelist annotation used by the Kubernetes Ingress
+	IngressWhitelistAnnotation = "ingress.kubernetes.io/whitelist-source-range"
 
-// DMZProvidersAnnotation is the Ingress annotation that contains will trigger this controller
-const DMZProvidersAnnotation = "armesto.net/ingress"
+	// DMZProvidersAnnotation is the Ingress annotation that contains will trigger this controller
+	DMZProvidersAnnotation = "armesto.net/ingress"
+
+	// ManagedWhitelistAnnotation is the name of the internal annotation used to keep track of the CIDRs managed by the controller
+	ManagedWhitelistAnnotation = "dmz-controller"
+)
 
 // IngressWhitelister to process watched Ingress objects
 type IngressWhitelister struct {
@@ -23,42 +27,38 @@ type IngressWhitelister struct {
 }
 
 // Whitelist adds the desired addresses as whitelisted to the given Ingress object
+// This is called whenever this controller starts, and whenever the resource changes, and also periodically every resyncPeriod.
+// Here we try to reconciliate the current and desired state.
 func (whitelister *IngressWhitelister) Whitelist(name string) error {
-	// retrieve the latest version in the cache of this object
 	ingress, err := whitelister.ingressRepository.Get(whitelister.namespace, name)
 	if err != nil {
-		return fmt.Errorf("error getting object '%s/%s' from api: %s", whitelister.namespace, name, err.Error())
+		return err
 	}
-	log.Printf("Got '%s/%s' object from cache.", whitelister.namespace, name)
+	glog.Infof("Got '%s/%s' Ingress object from cache.", whitelister.namespace, name)
 
 	configMap, err := whitelister.configMapRepository.Get(whitelister.namespace, DMZConfigMapName)
 	if err != nil {
-		return fmt.Errorf("error getting dmz configmap: %s", err.Error())
+		return err
 	}
-	log.Printf("Got '%s' object from cache.", DMZConfigMapName)
-
-	// This is called whenever this controller starts, and whenever the resource changes, and also periodically every resyncPeriod.
-	// Here we try to reconciliate the current and desired state.
-	// If there is an error, we skip calling `queue.Forget`, causing the resource to be requeued at a later time.
-	log.Printf("Processing Ingress resource '%s'", ingress.Name)
+	glog.Infof("Got '%s' ConfigMap from cache, with the following data: %s", DMZConfigMapName, configMap.Data)
 
 	provider, ok := ingress.Annotations[DMZProvidersAnnotation]
 	if ok {
 		currentWhitelistedIps := whitelist.NewWhitelistFromString(ingress.Annotations[IngressWhitelistAnnotation])
-		if _, ok := ingress.Annotations["dmz-controller"]; ok {
-			currentWhitelistedIps.Minus(whitelist.NewWhitelistFromString(ingress.Annotations["dmz-controller"]))
+		if _, ok := ingress.Annotations[ManagedWhitelistAnnotation]; ok {
+			currentWhitelistedIps.Minus(whitelist.NewWhitelistFromString(ingress.Annotations[ManagedWhitelistAnnotation]))
 		}
 		whitelistToApply := getWhitelistFromProvider(provider, configMap.Data)
-		ingress.Annotations["dmz-controller"] = whitelistToApply.ToString()
+		ingress.Annotations[ManagedWhitelistAnnotation] = whitelistToApply.ToString()
 		whitelistToApply.Merge(currentWhitelistedIps)
 		ingress.Annotations[IngressWhitelistAnnotation] = whitelistToApply.ToString()
 
 		// Once the whitelist has been updated, we will update the resource accordingly.
 		// If this request fails, this item will be requeued
 		if _, err := whitelister.ingressRepository.Save(ingress); err != nil {
-			return fmt.Errorf("error saving update to Ingress resource: %s", err.Error())
+			return err
 		}
-		log.Printf("Saved update to Ingress resource '%s'", ingress.Name)
+		glog.Infof("Saved changes to Ingress resource '%s'", ingress.Name)
 	}
 
 	return nil
@@ -70,7 +70,7 @@ func getWhitelistFromProvider(providers string, whitelistProviders map[string]st
 		provider := strings.TrimSpace(value)
 		if _, ok := whitelistProviders[provider]; ok {
 			ipsToWhitelist := whitelistProviders[provider]
-			log.Printf("Whitelisting %s", ipsToWhitelist)
+			glog.Infof("Whitelisting the Ingress object with %s IPs: %s", provider, ipsToWhitelist)
 			providerWhitelist := whitelist.NewWhitelistFromString(ipsToWhitelist)
 			whitelistToApply.Merge(providerWhitelist)
 		}

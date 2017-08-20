@@ -45,7 +45,7 @@ func (whitelist *Whitelist) Merge(anotherWhitelist *Whitelist) {
 
 // Add adds ips to the current Whitelist
 func (whitelist *Whitelist) Add(sourceWhitelist []string) {
-	whitelist.Ips = RemoveDuplicates(append(whitelist.Ips, validateIPs(sourceWhitelist)...))
+	whitelist.Ips = removeDuplicates(append(whitelist.Ips, validateIPs(sourceWhitelist)...))
 }
 
 // Minus removes IP's from given Whitelist from current Whitelist
@@ -83,8 +83,8 @@ func validateIPs(sourceWhitelist []string) []string {
 	return sourceWhitelist
 }
 
-// RemoveDuplicates removes duplicate elements from array
-func RemoveDuplicates(elements []string) []string {
+// removeDuplicates removes duplicate elements from array
+func removeDuplicates(elements []string) []string {
 	// Use map to record duplicates as we find them.
 	encountered := map[string]bool{}
 	result := []string{}

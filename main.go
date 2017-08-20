@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"reflect"
 	"time"
 
@@ -68,7 +67,9 @@ func main() {
 
 	// We log to stderr because glog will default to logging to a file.
 	// By setting this debugging is easier via `kubectl logs`
+
 	flag.Set("logtostderr", "true")
+
 	flag.Parse()
 
 	namespace = getNamespace()
@@ -85,10 +86,10 @@ func main() {
 	// Construct the Kubernetes client
 	client, err = kubernetes.NewForConfig(config)
 	if err != nil {
-		log.Fatalf("Error creating kubernetes client: %s", err.Error())
+		glog.Fatalf("Error creating kubernetes client: %s", err.Error())
 	}
 
-	log.Printf("Created Kubernetes client.")
+	glog.Infof("Created Kubernetes client.")
 
 	// we use a shared informer from the informer factory, to save calls to the API as we grow our application
 	// and so state is consistent between our control loops.
@@ -97,7 +98,7 @@ func main() {
 	informer := sharedFactory.Extensions().V1beta1().Ingresses().Informer()
 	cmInformer := sharedFactory.Core().V1().ConfigMaps().Informer()
 
-	// we add a new event handler, watching for changes to API resources.
+	// Add a new event handler watching for changes to Ingress resources.
 	informer.AddEventHandler(
 		cache.ResourceEventHandlerFuncs{
 			AddFunc: enqueue,
@@ -108,6 +109,8 @@ func main() {
 			},
 		},
 	)
+	// Add another handler watching for changes to an specific ConfigMap.
+	// If the ConfigMap changes, we queue all the Ingress objects.
 	cmInformer.AddEventHandler(
 		cache.ResourceEventHandlerFuncs{
 			UpdateFunc: func(old, cur interface{}) {
@@ -115,10 +118,10 @@ func main() {
 					if !reflect.DeepEqual(old, cur) {
 						ingresses, err := sharedFactory.Extensions().V1beta1().Ingresses().Lister().Ingresses("default").List(labels.Everything())
 						if err != nil {
-							log.Fatalf("error listing ingresses to notify change on configmap: %s", err.Error())
+							glog.Fatalf("error listing ingresses to notify change on configmap: %s", err.Error())
 						}
 						for _, ingress := range ingresses {
-							log.Printf("Queuing ingress %s object so it gets notified of the ConfigMap change", ingress.Name)
+							glog.Infof("Queuing ingress %s object so it gets notified of the ConfigMap change", ingress.Name)
 							enqueue(ingress)
 						}
 					}
@@ -129,12 +132,13 @@ func main() {
 
 	// start the informer. This will cause it to begin receiving updates from the configured API server and firing event handlers in response.
 	sharedFactory.Start(stopCh)
-	log.Printf("Started informer factory.")
+	glog.Infof("Started informer factory.")
 
 	// wait for the informer cache to finish performing it's initial applyWhiteList of resources
 	if !cache.WaitForCacheSync(stopCh, cmInformer.HasSynced, informer.HasSynced) {
-		log.Fatalf("error waiting for informer cache to applyWhiteList: %s", err.Error())
+		glog.Fatalf("error waiting for informer cache to applyWhiteList: %s", err.Error())
 	}
+	glog.Infof("Finished populating shared informers cache.")
 
 	ingressWhitelister := IngressWhitelister{
 		namespace:           namespace,
@@ -142,55 +146,52 @@ func main() {
 		configMapRepository: repository.NewConfigMapRepository(client, sharedFactory),
 	}
 
-	log.Printf("Finished populating shared informers cache.")
-
-	// here we start reading objects off the queue
+	// Start reading objects off the queue
 	for {
-		// we read a message off the queue
+		// Read a message off the queue
 		key, shutdown := queue.Get()
 
-		// if the queue has been shut down, we should exit the work queue here
+		// If the queue has been shut down, we should exit the work queue here.
 		if shutdown {
 			stopCh <- struct{}{}
 			return
 		}
 
-		// convert the queue item into a string. If it's not a string, we'll simply discard it as invalid data and log a message.
+		// Convert the queue item into a string. If it's not a string, we'll simply discard it as invalid data and log a message.
 		var strKey string
 		var ok bool
 		if strKey, ok = key.(string); !ok {
-			runtime.HandleError(fmt.Errorf("key in queue should be of type string but got %T. discarding", key))
+			runtime.HandleError(fmt.Errorf("Key in queue should be of type string but got %T. discarding", key))
 			return
 		}
 
-		// we define a function here to process a queue item, so that we can use 'defer' to make sure the message is marked as Done on the queue
-		// Done marks item as done processing, and if it has been marked as dirty again while it was being processed,
-		// it will be re-added to the queue for re-processing.
+		// We define a function here to process a queue item, so that we can use 'defer' to make sure the message is marked as Done on the queue.
+		// Done marks item as done processing, and if it has been marked as dirty again while it was being processed, it will be re-added to the queue for re-processing.
+		// If there is an error, we skip calling `queue.Forget`, causing the resource to be requeued at a later time.
 		func(key string) {
 			defer queue.Done(key)
 
 			// attempt to split the 'key' into namespace and object name
 			_, name, err := cache.SplitMetaNamespaceKey(strKey)
 			if err != nil {
-				runtime.HandleError(fmt.Errorf("error splitting meta namespace key into parts: %s", err.Error()))
+				runtime.HandleError(fmt.Errorf("Error splitting meta namespace key into parts: %s", err.Error()))
 				return
 			}
 
-			log.Printf("Read key '%s/%s' off workqueue. Fetching from cache...", namespace, name)
+			glog.Infof("Read key '%s/%s' off workqueue", namespace, name)
 
 			err = ingressWhitelister.Whitelist(name)
 
 			if err != nil {
-				runtime.HandleError(fmt.Errorf("error getting object '%s/%s' from api: %s", namespace, name, err.Error()))
+				runtime.HandleError(fmt.Errorf("Error whitelisting '%s/%s': %s", namespace, name, err.Error()))
 				return
 			}
 
-			// as we managed to process this successfully, we can forget it
-			// from the work queue altogether.
-			// Forget indicates that an item is finished being retried.  Doesn't matter whether its for perm failing
-			// or for success, we'll stop the rate limiter from tracking it.  This only clears the `rateLimiter`, you
+			// As we managed to process this successfully, we can forget it from the work queue altogether.
+			// Forget indicates that an item is finished being retried. Doesn't matter whether its for perm failing
+			// or for success, we'll stop the rate limiter from tracking it. This only clears the `rateLimiter`, you
 			// still have to call `Done` on the queue.
-			log.Printf("Finished processing '%s/%s' successfully! Removing from queue.", namespace, name)
+			glog.Infof("Finished processing '%s/%s' successfully! Removing from queue.", namespace, name)
 			queue.Forget(key)
 		}(strKey)
 	}
@@ -199,16 +200,14 @@ func main() {
 // enqueue will add an object 'obj' into the workqueue. The object being added
 // must be of type metav1.Object, metav1.ObjectAccessor or cache.ExplicitKey.
 func enqueue(obj interface{}) {
-	// DeletionHandlingMetaNamespaceKeyFunc will convert an object into a
-	// 'namespace/name' string. We do this because our item may be processed
-	// much later than now, and so we want to ensure it gets a fresh copy of
-	// the resource when it starts. Also, this allows us to keep adding the
-	// same item into the work queue without duplicates building up.
+	// DeletionHandlingMetaNamespaceKeyFunc will convert an object into a 'namespace/name' string.
+	// We do this because our item may be processed much later than now, and so we want to ensure it gets a fresh copy of the resource when it starts.
+	// Also, this allows us to keep adding the same item into the work queue without duplicates building up.
 	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 	if err != nil {
 		runtime.HandleError(fmt.Errorf("error obtaining key for object being enqueue: %s", err.Error()))
 		return
 	}
-	// add the item to the queue
+	// Add the generated key to the queue
 	queue.Add(key)
 }
