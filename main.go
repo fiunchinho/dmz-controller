@@ -117,7 +117,7 @@ func main() {
 							glog.Fatalf("Error listing ingresses to notify ConfigMap change: %s", err.Error())
 						}
 						for _, ingress := range ingresses {
-							glog.Infof("Queuing ingress '%s' object, because of a ConfigMap change", ingress.Name)
+							glog.V(0).Infof("Queuing ingress '%s' object, because of a ConfigMap change", ingress.Name)
 							enqueue(ingress)
 						}
 					}
@@ -128,13 +128,13 @@ func main() {
 
 	// start the informer. This will cause it to begin receiving updates from the configured API server and firing event handlers in response.
 	sharedFactory.Start(stopCh)
-	glog.Infof("Started informer factory.")
+	glog.V(0).Infof("Started informer factory.")
 
 	// wait for the informer cache to finish performing it's initial applyWhiteList of resources
 	if !cache.WaitForCacheSync(stopCh, cmInformer.HasSynced, informer.HasSynced) {
 		glog.Fatalf("Error waiting for informer cache: %s", err.Error())
 	}
-	glog.Infof("Finished populating shared informers cache.")
+	glog.V(0).Infof("Finished populating shared informers cache. Listening for changes...")
 
 	ingressWhitelister := IngressWhitelister{
 		namespace:           namespace,
@@ -146,7 +146,7 @@ func main() {
 	for {
 		// Read a message off the queue
 		key, shutdown := queue.Get()
-		glog.Infof("Read key '%s/%s' off workqueue", key)
+		glog.V(1).Infof("Read key '%s' off workqueue", key)
 
 		// If the queue has been shut down, we should exit the work queue here.
 		if shutdown {
@@ -189,7 +189,7 @@ func main() {
 			// Forget indicates that an item is finished being retried. Doesn't matter whether its for perm failing
 			// or for success, we'll stop the rate limiter from tracking it. This only clears the `rateLimiter`, you
 			// still have to call `Done` on the queue.
-			glog.Infof("Finished processing '%s/%s' successfully! Removing from queue.", namespace, name)
+			glog.V(1).Infof("Finished processing '%s/%s' successfully! Removing from queue.", namespace, name)
 			queue.Forget(key)
 		}(strKey)
 	}

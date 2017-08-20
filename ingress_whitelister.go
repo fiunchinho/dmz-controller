@@ -34,13 +34,13 @@ func (whitelister *IngressWhitelister) Whitelist(name string) error {
 	if err != nil {
 		return err
 	}
-	glog.Infof("Got '%s/%s' Ingress object from cache.", whitelister.namespace, name)
+	glog.V(0).Infof("Got '%s/%s' Ingress object from cache.", whitelister.namespace, name)
 
 	configMap, err := whitelister.configMapRepository.Get(whitelister.namespace, DMZConfigMapName)
 	if err != nil {
 		return err
 	}
-	glog.Infof("Got '%s' ConfigMap from cache, with the following data: %s", DMZConfigMapName, configMap.Data)
+	glog.V(1).Infof("Got '%s' ConfigMap from cache, with the following data: %s", DMZConfigMapName, configMap.Data)
 
 	provider, ok := ingress.Annotations[DMZProvidersAnnotation]
 	if ok {
@@ -49,6 +49,7 @@ func (whitelister *IngressWhitelister) Whitelist(name string) error {
 			currentWhitelistedIps.Minus(whitelist.NewWhitelistFromString(ingress.Annotations[ManagedWhitelistAnnotation]))
 		}
 		whitelistToApply := getWhitelistFromProvider(provider, configMap.Data)
+		glog.V(0).Infof("Whitelisting the Ingress object with %s IPs: %s", provider, whitelistToApply.ToString())
 		ingress.Annotations[ManagedWhitelistAnnotation] = whitelistToApply.ToString()
 		whitelistToApply.Merge(currentWhitelistedIps)
 		ingress.Annotations[IngressWhitelistAnnotation] = whitelistToApply.ToString()
@@ -58,7 +59,7 @@ func (whitelister *IngressWhitelister) Whitelist(name string) error {
 		if _, err := whitelister.ingressRepository.Save(ingress); err != nil {
 			return err
 		}
-		glog.Infof("Saved changes to Ingress resource '%s'", ingress.Name)
+		glog.V(0).Infof("Saved changes to Ingress resource '%s'", ingress.Name)
 	}
 
 	return nil
@@ -70,7 +71,6 @@ func getWhitelistFromProvider(providers string, whitelistProviders map[string]st
 		provider := strings.TrimSpace(value)
 		if _, ok := whitelistProviders[provider]; ok {
 			ipsToWhitelist := whitelistProviders[provider]
-			glog.Infof("Whitelisting the Ingress object with %s IPs: %s", provider, ipsToWhitelist)
 			providerWhitelist := whitelist.NewWhitelistFromString(ipsToWhitelist)
 			whitelistToApply.Merge(providerWhitelist)
 		}

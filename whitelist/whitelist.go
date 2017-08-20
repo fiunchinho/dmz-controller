@@ -74,8 +74,7 @@ func validateIPs(sourceWhitelist []string) []string {
 			}
 
 			if err != nil {
-				glog.Info(err)
-				glog.Infof("The following IP won't be added to the whitelist: %s", sourceWhitelist[i])
+				glog.Warningf("The IP '%s' won't be added to the whitelist: %s", sourceWhitelist[i], err)
 				sourceWhitelist = append(sourceWhitelist[:i], sourceWhitelist[i+1:]...)
 			}
 		}
