@@ -65,9 +65,7 @@ func main() {
 	// However, allow the use of a local kubeconfig as this can make local development & testing easier.
 	kubeconfig := flag.String("kubeconfig", "", "Path to a kubeconfig file")
 
-	// We log to stderr because glog will default to logging to a file.
-	// By setting this debugging is easier via `kubectl logs`
-
+	// We log to stderr because glog will default to logging to a file. By setting this debugging is easier via `kubectl logs`
 	flag.Set("logtostderr", "true")
 
 	flag.Parse()
@@ -89,9 +87,7 @@ func main() {
 		glog.Fatalf("Error creating kubernetes client: %s", err.Error())
 	}
 
-	glog.Infof("Created Kubernetes client.")
-
-	// we use a shared informer from the informer factory, to save calls to the API as we grow our application
+	// We use a shared informer from the informer factory, to save calls to the API as we grow our application
 	// and so state is consistent between our control loops.
 	// We set a resync period of 30 seconds, in case any create/replace/update/delete operations are missed when watching
 	sharedFactory = informers.NewSharedInformerFactory(client, time.Second*30)
@@ -116,12 +112,12 @@ func main() {
 			UpdateFunc: func(old, cur interface{}) {
 				if cur.(*v1.ConfigMap).Name == DMZConfigMapName {
 					if !reflect.DeepEqual(old, cur) {
-						ingresses, err := sharedFactory.Extensions().V1beta1().Ingresses().Lister().Ingresses("default").List(labels.Everything())
+						ingresses, err := sharedFactory.Extensions().V1beta1().Ingresses().Lister().Ingresses(namespace).List(labels.Everything())
 						if err != nil {
-							glog.Fatalf("error listing ingresses to notify change on configmap: %s", err.Error())
+							glog.Fatalf("Error listing ingresses to notify ConfigMap change: %s", err.Error())
 						}
 						for _, ingress := range ingresses {
-							glog.Infof("Queuing ingress %s object so it gets notified of the ConfigMap change", ingress.Name)
+							glog.Infof("Queuing ingress '%s' object, because of a ConfigMap change", ingress.Name)
 							enqueue(ingress)
 						}
 					}
@@ -136,7 +132,7 @@ func main() {
 
 	// wait for the informer cache to finish performing it's initial applyWhiteList of resources
 	if !cache.WaitForCacheSync(stopCh, cmInformer.HasSynced, informer.HasSynced) {
-		glog.Fatalf("error waiting for informer cache to applyWhiteList: %s", err.Error())
+		glog.Fatalf("Error waiting for informer cache: %s", err.Error())
 	}
 	glog.Infof("Finished populating shared informers cache.")
 
@@ -150,6 +146,7 @@ func main() {
 	for {
 		// Read a message off the queue
 		key, shutdown := queue.Get()
+		glog.Infof("Read key '%s/%s' off workqueue", key)
 
 		// If the queue has been shut down, we should exit the work queue here.
 		if shutdown {
@@ -166,23 +163,24 @@ func main() {
 		}
 
 		// We define a function here to process a queue item, so that we can use 'defer' to make sure the message is marked as Done on the queue.
-		// Done marks item as done processing, and if it has been marked as dirty again while it was being processed, it will be re-added to the queue for re-processing.
 		// If there is an error, we skip calling `queue.Forget`, causing the resource to be requeued at a later time.
 		func(key string) {
+			// Done marks item as done processing, and if it has been marked as dirty again while it was being processed, it will be re-added to the queue for re-processing.
 			defer queue.Done(key)
 
-			// attempt to split the 'key' into namespace and object name
-			_, name, err := cache.SplitMetaNamespaceKey(strKey)
+			// Attempt to split the 'key' into namespace and object name
+			ingNamespace, name, err := cache.SplitMetaNamespaceKey(key)
 			if err != nil {
 				runtime.HandleError(fmt.Errorf("Error splitting meta namespace key into parts: %s", err.Error()))
 				return
 			}
 
-			glog.Infof("Read key '%s/%s' off workqueue", namespace, name)
+			if ingNamespace != namespace {
+				runtime.HandleError(fmt.Errorf("The controller is working on the '%s' namespace, but got Ingress object in the '%s' namespace", namespace, ingNamespace))
+				return
+			}
 
-			err = ingressWhitelister.Whitelist(name)
-
-			if err != nil {
+			if err = ingressWhitelister.Whitelist(name); err != nil {
 				runtime.HandleError(fmt.Errorf("Error whitelisting '%s/%s': %s", namespace, name, err.Error()))
 				return
 			}
@@ -197,8 +195,7 @@ func main() {
 	}
 }
 
-// enqueue will add an object 'obj' into the workqueue. The object being added
-// must be of type metav1.Object, metav1.ObjectAccessor or cache.ExplicitKey.
+// enqueue will add an object 'obj' into the workqueue. The object being added must be of type metav1.Object, metav1.ObjectAccessor or cache.ExplicitKey.
 func enqueue(obj interface{}) {
 	// DeletionHandlingMetaNamespaceKeyFunc will convert an object into a 'namespace/name' string.
 	// We do this because our item may be processed much later than now, and so we want to ensure it gets a fresh copy of the resource when it starts.
