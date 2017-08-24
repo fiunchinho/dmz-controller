@@ -4,11 +4,10 @@ go:
 sudo: required
 services:
 - docker
-install: bin/install
-script: make lint deps package test
+script: make deps coverage
 deploy:
   provider: script
-  script: make publish DOCKER_TAG=${TRAVIS_COMMIT}
+  script: make release VERSION=${TRAVIS_COMMIT}
   skip_cleanup: true
 after_success:
 - bash <(curl -s https://codecov.io/bash)

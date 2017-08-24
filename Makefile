@@ -1,34 +1,54 @@
+APPLICATION  := dmz-controller
+LINUX        := release/${APPLICATION}-linux-amd64
+DARWIN       := release/${APPLICATION}-darwin-amd64
 DOCKER_IMAGE := fiunchinho/dmz-controller
-DOCKER_TAG   := latest
 K8S_NAMESPACE:= default
+BIN_DIR      := $(GOPATH)/bin
+GOMETALINTER := $(BIN_DIR)/gometalinter
+GLIDE        := $(BIN_DIR)/glide
+COVER        := $(BIN_DIR)/gocov-xml
+VERSION      ?= latest
 
-.PHONY: build deps lint package test coverage helm publish
 
-build:
-	go build -i -o dmz-controller
+$(DARWIN):
+	GOOS=linux GOARCH=amd64 go build -i -o ${DARWIN}
 
-deps:
+$(LINUX):
+	GOOS=linux GOARCH=amd64 go build -i -o ${LINUX}
+
+.PHONY: deps
+deps: $(GLIDE)
 	glide install
 
-lint:
+$(GOMETALINTER):
+	go get -u gopkg.in/alecthomas/gometalinter.v1
 	gometalinter.v1 --install --update
+
+$(GLIDE):
+	go get -u github.com/Masterminds/glide
+
+$(COVER):
+	go get -u github.com/axw/gocov/gocov
+	go get -u github.com/AlekSi/gocov-xml
+
+.PHONY: lint
+lint: $(GOMETALINTER)
 	gometalinter.v1 --vendor --disable-all -E vet -E goconst -E golint -E goimports -E misspell --deadline=50s -j 11 "${PWD}/..."
 
-package:
-	env GOOS=linux go build -o dmz-controller
-	docker build -t "${DOCKER_IMAGE}":"${DOCKER_TAG}" "."
-
-test:
+.PHONY: test
+test: lint
 	go test `glide novendor`
 
-coverage:
+.PHONY: coverage
+coverage: $(COVER) lint
 	bin/coverage
 
-helm: package
-	helm upgrade --install --namespace="${K8S_NAMESPACE}" "dmz-controller" "./helm/dmz-controller"
+.PHONY: helm
+helm:
+	helm upgrade --install --namespace="${K8S_NAMESPACE}" "${APPLICATION}" "./helm/${APPLICATION}"
 
-publish: package
+.PHONY: release
+release: $(LINUX)
 	docker login --username "${DOCKER_USER}" --password "${DOCKER_PASS}"
 	docker build -t "${DOCKER_IMAGE}" "."
-	docker tag "${DOCKER_IMAGE}" "${DOCKER_IMAGE}:${DOCKER_TAG}"
-	docker push "${DOCKER_IMAGE}"
+	docker tag "${DOCKER_IMAGE}" "${DOCKER_IMAGE}:${VERSION}"

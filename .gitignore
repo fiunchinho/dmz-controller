@@ -1,4 +1,4 @@
 vendor
 coverage.*
 profile.cov
-dmz-controller
+release

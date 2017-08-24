@@ -10,4 +10,4 @@ RUN apk add --no-cache --update tini=0.14.0-r0 ca-certificates && \
     rm -rf /var/cache/apk/* /tmp/*
 
 USER app
-ADD dmz-controller /opt/app
+ADD ["release/*-linux-*", "/opt/app"]
