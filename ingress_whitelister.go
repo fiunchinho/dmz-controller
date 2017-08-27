@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/fiunchinho/dmz-controller/repository"
 	"github.com/fiunchinho/dmz-controller/whitelist"
 	"github.com/golang/glog"
+	"k8s.io/client-go/tools/cache"
 )
 
 const (
@@ -21,7 +23,6 @@ const (
 
 // IngressWhitelister to process watched Ingress objects
 type IngressWhitelister struct {
-	namespace           string
 	ingressRepository   repository.IngressRepository
 	configMapRepository repository.ConfigMapRepository
 }
@@ -29,14 +30,19 @@ type IngressWhitelister struct {
 // Whitelist adds the desired addresses as whitelisted to the given Ingress object
 // This is called whenever this controller starts, and whenever the resource changes, and also periodically every resyncPeriod.
 // Here we try to reconciliate the current and desired state.
-func (whitelister *IngressWhitelister) Whitelist(name string) error {
-	ingress, err := whitelister.ingressRepository.Get(whitelister.namespace, name)
+func (whitelister *IngressWhitelister) Whitelist(key string) error {
+	namespace, name, err := cache.SplitMetaNamespaceKey(key)
+	if err != nil {
+		return fmt.Errorf("Error splitting meta namespace key into parts: %s", err.Error())
+	}
+
+	ingress, err := whitelister.ingressRepository.Get(namespace, name)
 	if err != nil {
 		return err
 	}
-	glog.V(0).Infof("Got '%s/%s' Ingress object from cache.", whitelister.namespace, name)
+	glog.V(0).Infof("Got '%s/%s' Ingress object from cache.", namespace, name)
 
-	configMap, err := whitelister.configMapRepository.Get(whitelister.namespace, DMZConfigMapName)
+	configMap, err := whitelister.configMapRepository.Get(namespace, DMZConfigMapName)
 	if err != nil {
 		return err
 	}

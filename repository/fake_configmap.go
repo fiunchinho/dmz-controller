@@ -16,9 +16,9 @@ func (h *FakeConfigMap) Get(namespace string, key string) (*v1.ConfigMap, error)
 }
 
 // Save stores the given configmap to the repository
-func (h *FakeConfigMap) Save(configMap *v1.ConfigMap) error {
+func (h *FakeConfigMap) Save(configMap *v1.ConfigMap) (*v1.ConfigMap, error) {
 	h.configMaps[configMap.Name] = *configMap
-	return nil
+	return configMap, nil
 }
 
 // NewFakeConfigMapRepository returns an instance of the repository

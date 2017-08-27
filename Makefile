@@ -10,9 +10,11 @@ COVER        := $(BIN_DIR)/gocov-xml
 VERSION      ?= latest
 
 
+.PHONY: $(DARWIN)
 $(DARWIN):
-	GOOS=linux GOARCH=amd64 go build -i -o ${DARWIN}
+	GOOS=darwin GOARCH=amd64 go build -i -o ${DARWIN}
 
+.PHONY: $(LINUX)
 $(LINUX):
 	GOOS=linux GOARCH=amd64 go build -i -o ${LINUX}
 
