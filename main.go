@@ -137,7 +137,6 @@ func main() {
 	glog.V(0).Infof("Finished populating shared informers cache. Listening for changes...")
 
 	ingressWhitelister := IngressWhitelister{
-		namespace:           namespace,
 		ingressRepository:   repository.NewIngressRepository(client, sharedFactory),
 		configMapRepository: repository.NewConfigMapRepository(client, sharedFactory),
 	}
@@ -168,20 +167,8 @@ func main() {
 			// Done marks item as done processing, and if it has been marked as dirty again while it was being processed, it will be re-added to the queue for re-processing.
 			defer queue.Done(key)
 
-			// Attempt to split the 'key' into namespace and object name
-			ingNamespace, name, err := cache.SplitMetaNamespaceKey(key)
-			if err != nil {
-				runtime.HandleError(fmt.Errorf("Error splitting meta namespace key into parts: %s", err.Error()))
-				return
-			}
-
-			if ingNamespace != namespace {
-				runtime.HandleError(fmt.Errorf("The controller is working on the '%s' namespace, but got Ingress object in the '%s' namespace", namespace, ingNamespace))
-				return
-			}
-
-			if err = ingressWhitelister.Whitelist(name); err != nil {
-				runtime.HandleError(fmt.Errorf("Error whitelisting '%s/%s': %s", namespace, name, err.Error()))
+			if err = ingressWhitelister.Whitelist(key); err != nil {
+				runtime.HandleError(fmt.Errorf("Error whitelisting '%s': %s", key, err.Error()))
 				return
 			}
 
@@ -189,7 +176,7 @@ func main() {
 			// Forget indicates that an item is finished being retried. Doesn't matter whether its for perm failing
 			// or for success, we'll stop the rate limiter from tracking it. This only clears the `rateLimiter`, you
 			// still have to call `Done` on the queue.
-			glog.V(1).Infof("Finished processing '%s/%s' successfully! Removing from queue.", namespace, name)
+			glog.V(1).Infof("Finished processing '%s' successfully! Removing from queue.", key)
 			queue.Forget(key)
 		}(strKey)
 	}

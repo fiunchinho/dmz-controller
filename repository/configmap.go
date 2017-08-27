@@ -18,8 +18,8 @@ func (h *ConfigMap) Get(namespace string, key string) (*v1.ConfigMap, error) {
 }
 
 // Save stores the ConfigMap in the repository
-func (h *ConfigMap) Save(configMap *v1.ConfigMap) error {
-	return nil
+func (h *ConfigMap) Save(configMap *v1.ConfigMap) (*v1.ConfigMap, error) {
+	return h.client.CoreV1().ConfigMaps(configMap.Namespace).Update(configMap)
 }
 
 // NewConfigMapRepository returns a repository instance
