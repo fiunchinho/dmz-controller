@@ -3,6 +3,8 @@ apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
   name: my-application
+  labels:
+    app: dmz-controller-example
 spec:
   replicas: 2
   template:

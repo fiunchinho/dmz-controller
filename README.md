@@ -9,7 +9,7 @@
 [6]: https://codecov.io/github/fiunchinho/dmz-controller?branch=master "Codecov Status"
 [7]: https://goreportcard.com/badge/github.com/fiunchinho/dmz-controller "Go Report badge"
 [8]: https://goreportcard.com/report/github.com/fiunchinho/dmz-controller "Go Report"
-[9]: https://img.shields.io/docker/pulls/fiunchinho/dmz-controller.svg?maxAge=604800 "Docker Pulls"
+[9]: https://img.shields.io/docker/pulls/fiunchinho/dmz-controller.svg "Docker Pulls"
 [10]: https://hub.docker.com/r/fiunchinho/dmz-controller/ "DockerHub"
 [11]: https://codeclimate.com/github/fiunchinho/dmz-controller/badges/gpa.svg "Code Climate badge"
 [12]: https://codeclimate.com/github/fiunchinho/dmz-controller "Code Climate"
@@ -32,11 +32,11 @@ Manually handling these lists of known sources is costly and error prone. This c
 ### Running outside of the Kubernetes cluster:
 First build the `dmz-controller` binary by running:
 
-    make build
+    make
 
 This will produce a binary file that you can start by passing the cluster configuration file and the namespace to watch:
 
-    NAMESPACE=default dmz-controller --kubeconfig ~/.kube/config
+    NAMESPACE=default ./release/dmz-controller-darwin-amd64 --kubeconfig ~/.kube/config
 
 Try out the controller creating our example ConfigMap and Ingress objects:
 
@@ -46,6 +46,10 @@ This will create a `ConfigMap` with some CIDRs, and an `Ingress` with the right 
 If you want to play around with different CIDRs, try changing the `ConfigMap`
 
     kubectl edit configmap dmz-controller
+
+Clean all the resources created by the example with
+
+    kubectl delete cm,po,deploy,svc,ing -l app=dmz-controller-example
 
 ### Running inside of the Kubernetes cluster:
 First build the image:
@@ -72,6 +76,10 @@ If you want to play around with different CIDRs, try passing different values to
 
 It will watch for Ingress objects on the same namespace where the controller is running, unless you pass a `$NAMESPACE` environment variable to the controller.
 
+Clean all the resources created by the example with
+
+    kubectl delete cm,po,deploy,svc,ing -l app=dmz-controller-example
+
 ## How it works
 Let's say we want to create an `Ingress` object to expose our application to the outside.
 We could manually add IP's to the [ingress.kubernetes.io/whitelist-source-range annotation](https://github.com/kubernetes/ingress/blob/master/controllers/nginx/configuration.md#whitelist-source-range) to allow traffic from those IP's.
@@ -84,7 +92,7 @@ metadata:
   name: my-application-ingress
   namespace: default
   annotations:
-    armesto.net/ingress: office
+    armesto.net/ingress-providers: office
 spec:
   backend:
     serviceName: my-application-service
@@ -115,9 +123,9 @@ metadata:
   name: my-application-ingress
   namespace: default
   annotations:
-    armesto.net/ingress: office
+    armesto.net/ingress-providers: office
     ingress.kubernetes.io/whitelist-source-range: 8.8.8.8/32,8.8.4.4/32
-    dmz-controller: 8.8.8.8/32,8.8.4.4/32
+    armesto.net/dmz-controller-managed-cidr: 8.8.8.8/32,8.8.4.4/32
 spec:
   backend:
     serviceName: my-application-service
@@ -144,7 +152,7 @@ metadata:
   name: my-application-ingress
   namespace: default
   annotations:
-    armesto.net/ingress: office,vpn
+    armesto.net/ingress-providers: office,vpn
 spec:
   backend:
     serviceName: my-application-service

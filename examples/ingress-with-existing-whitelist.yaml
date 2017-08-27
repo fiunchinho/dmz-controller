@@ -4,8 +4,10 @@ kind: Ingress
 metadata:
   name: my-application-already-whitelisted-ingress
   namespace: default
+  labels:
+    app: dmz-controller-example
   annotations:
-    armesto.net/ingress: office
+    armesto.net/ingress-providers: office
     ingress.kubernetes.io/whitelist-source-range: 56.99.99.99/32
 spec:
   backend:

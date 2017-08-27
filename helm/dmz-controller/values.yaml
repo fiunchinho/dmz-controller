@@ -2,7 +2,7 @@
 image:
   repository: fiunchinho/dmz-controller
   tag: latest
-  pullPolicy: Never
+  pullPolicy: IfNotPresent
 # List of CIDRs to whitelist
 #cidrs:
 #  vpn: 1.1.1.1/32

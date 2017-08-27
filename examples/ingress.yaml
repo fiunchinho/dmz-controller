@@ -4,8 +4,10 @@ kind: Ingress
 metadata:
   name: my-application-ingress
   namespace: default
+  labels:
+    app: dmz-controller-example
   annotations:
-    armesto.net/ingress: vpn,office
+    armesto.net/ingress-providers: vpn,office
 spec:
   backend:
     serviceName: my-application-service

@@ -15,10 +15,10 @@ const (
 	IngressWhitelistAnnotation = "ingress.kubernetes.io/whitelist-source-range"
 
 	// DMZProvidersAnnotation is the Ingress annotation that contains will trigger this controller
-	DMZProvidersAnnotation = "armesto.net/ingress"
+	DMZProvidersAnnotation = "armesto.net/ingress-providers"
 
 	// ManagedWhitelistAnnotation is the name of the internal annotation used to keep track of the CIDRs managed by the controller
-	ManagedWhitelistAnnotation = "dmz-controller"
+	ManagedWhitelistAnnotation = "armesto.net/dmz-controller-managed-cidr"
 )
 
 // IngressWhitelister to process watched Ingress objects
